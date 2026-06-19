@@ -1,0 +1,25 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #000000;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+}
+
+#midi-upload {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  background: #ffffff;
+  padding: 8px;
+  border-radius: 4px;
+  font-family: sans-serif;
+}
