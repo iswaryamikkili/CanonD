@@ -12,5 +12,22 @@
     <div id="app"></div>
     <input type="file" id="midi-upload" accept=".mid,.midi" />
     <script type="module" src="/src/main.js"></script>
+  <button id="toggleSidebar" style="z-index: 20;">☰</button>
+    <div id="sidebar" class="sidebar collapsed">
+      <button id="toggleSidebar1" style="z-index: 20;">☰</button>
+
+  <div class="panel">
+    <h3>Colors</h3>
+
+    <label>White Keys</label>
+    <input type="color" id="whiteColor" value="#c41e3a" />
+
+    <label>Black Keys</label>
+    <input type="color" id="blackColor" value="#ff6b00" />
+
+    <label>Markers</label>
+    <input type="color" id="markerColor" value="#aaff00" />
+  </div>
+</div>
   </body>
 </html>

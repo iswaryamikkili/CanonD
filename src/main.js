@@ -10,9 +10,9 @@ const noteSemitoneOffsets = {
   'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11
 };
 
-const WHITE_KEY_COLOR = 0xc41e3a;
-const BLACK_KEY_COLOR = 0xff6b00;
-const FLASH_COLOR = 0xffff00;
+var WHITE_KEY_COLOR = new THREE.Color(0xc41e3a);
+var BLACK_KEY_COLOR = new THREE.Color(0xff6b00);
+var FLASH_COLOR = new THREE.Color(0xffff00);
 
 
 function noteNameToMidiNumber(noteName) {
@@ -25,7 +25,7 @@ function noteNameToMidiNumber(noteName) {
 
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
+scene.background = new THREE.Color(0xFFFFFF);
 
 const camera = new THREE.PerspectiveCamera(
   60,
@@ -33,7 +33,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(10, 15, 12);
+camera.position.set(4, 7, 5);
 camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -66,7 +66,7 @@ scene.add(piano);
 const keysByMidiNumber = new Map();
 
 const markerMaterial = new THREE.MeshBasicMaterial({
-  color: 0x00aaff,
+  color: 0xaaff00,
   transparent: true,
   opacity: 0.85
 });
@@ -119,7 +119,48 @@ const blackMaterial = new THREE.MeshPhysicalMaterial({
   
 });
 
+const whiteColorInput = document.getElementById("whiteColor");
+const blackColorInput = document.getElementById("blackColor");
+const markerColorInput = document.getElementById("markerColor");
 
+const sidebar = document.getElementById("sidebar");
+const toggleBtn = document.getElementById("toggleSidebar");
+
+toggleBtn.addEventListener("click", () => {
+  sidebar.classList.toggle("collapsed");
+});
+
+whiteColorInput.addEventListener("input", (e) => {
+  WHITE_KEY_COLOR = parseInt(e.target.value.replace("#", "0x"));
+whiteMaterial.color.set(WHITE_KEY_COLOR);
+const color = new THREE.Color(e.target.value);
+
+  whiteMaterial.color.copy(color);
+
+  for (const mat of whiteMaterials) {
+    mat.color.copy(color);
+  }
+});
+
+blackColorInput.addEventListener("input", (e) => {
+   BLACK_KEY_COLOR = parseInt(e.target.value.replace("#", "0x"));
+blackMaterial.color.set(BLACK_KEY_COLOR);
+  
+  const color = new THREE.Color(e.target.value);
+
+  blackMaterial.color.copy(color);
+
+  for (const mat of blackMaterials) {
+    mat.color.copy(color);
+  }
+});
+
+markerColorInput.addEventListener("input", (e) => {
+  FLASH_COLOR = parseInt(e.target.value.replace("#", "0x"));
+  markerMaterial.color.set(FLASH_COLOR);
+  });
+const whiteMaterials = [];
+const blackMaterials = [];
 const totalWhiteKeys = 52;
 const rInnerWhite = 2.4;
 const rOuterWhite = 3.2;
@@ -147,7 +188,10 @@ for (let i = 0; i < totalWhiteKeys; i++) {
   });
   geometry.rotateX(-Math.PI / 2);
 
-  const key = new THREE.Mesh(geometry, whiteMaterial.clone());
+  const mat = whiteMaterial.clone();
+whiteMaterials.push(mat);
+
+const key = new THREE.Mesh(geometry, mat);
   key.userData.note = whiteKeyNames[i];
   key.userData.angle = (angleStart + angleEnd) / 2;
   key.userData.radius=(rInnerWhite+rOuterWhite)/2;
@@ -198,7 +242,10 @@ allBlackAngles.forEach((angleMid, index) => {
   });
   geometry.rotateX(-Math.PI / 2);
 
-  const key = new THREE.Mesh(geometry, blackMaterial.clone());
+  const mat = blackMaterial.clone();
+blackMaterials.push(mat);
+
+const key = new THREE.Mesh(geometry, mat);
   key.userData.note = blackKeyNames[index];
   key.userData.angle = angleMid;
   key.userData.radius=(rInnerBlack+rOuterBlack)/2;
@@ -216,7 +263,6 @@ function showMarkerOnKey(key) {
   const geometry = createMarkerGeometry(angle, startRadius);
 
   const marker = new THREE.Mesh(geometry, markerMaterial.clone());
-
   marker.position.y = 0.8;
 
   scene.add(marker);
