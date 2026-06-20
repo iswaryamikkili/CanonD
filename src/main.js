@@ -23,25 +23,6 @@ function noteNameToMidiNumber(noteName) {
   return (octave + 1) * 12 + semitone;
 }
 
-function createNoteTexture() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 128;
-  canvas.height = 128;
-
-  const ctx = canvas.getContext('2d');
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  ctx.font = '90px sans-serif';
-  ctx.fillStyle = '#00aaff';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('♪', canvas.width / 2, canvas.height / 2);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  return texture;
-}
-
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
@@ -84,19 +65,43 @@ scene.add(piano);
 
 const keysByMidiNumber = new Map();
 
-
-
-
-const noteTexture = createNoteTexture();
-
-const noteMaterial = new THREE.SpriteMaterial({
-  map: noteTexture,
-  transparent: true
+const markerMaterial = new THREE.MeshBasicMaterial({
+  color: 0x00aaff,
+  transparent: true,
+  opacity: 0.85
 });
 
 const activeMarkers = [];
 
+function createMarkerGeometry(angle, radius) {
+  const markerLength = 0.25; 
+  const markerWidth = 0.3;   
 
+  const angleHalf = markerLength / radius / 2; 
+
+  const innerR = radius - markerWidth / 2;
+  const outerR = radius + markerWidth / 2;
+
+  const p1 = [innerR * Math.cos(angle - angleHalf), innerR * Math.sin(angle - angleHalf)];
+  const p2 = [outerR * Math.cos(angle - angleHalf), outerR * Math.sin(angle - angleHalf)];
+  const p3 = [outerR * Math.cos(angle + angleHalf), outerR * Math.sin(angle + angleHalf)];
+  const p4 = [innerR * Math.cos(angle + angleHalf), innerR * Math.sin(angle + angleHalf)];
+
+  const shape = new THREE.Shape();
+  shape.moveTo(p1[0], p1[1]);
+  shape.lineTo(p2[0], p2[1]);
+  shape.lineTo(p3[0], p3[1]);
+  shape.lineTo(p4[0], p4[1]);
+  shape.lineTo(p1[0], p1[1]);
+
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: 0.1,
+    bevelEnabled: false
+  });
+  geometry.rotateX(-Math.PI / 2);
+
+  return geometry;
+}
 
 const whiteMaterial = new THREE.MeshPhysicalMaterial({
   color: WHITE_KEY_COLOR,
@@ -116,7 +121,7 @@ const blackMaterial = new THREE.MeshPhysicalMaterial({
 
 
 const totalWhiteKeys = 52;
-const rInnerWhite = 4.4;
+const rInnerWhite = 2.4;
 const rOuterWhite = 3.2;
 const whiteGap = 0.008;
 
@@ -154,7 +159,7 @@ for (let i = 0; i < totalWhiteKeys; i++) {
 
 
 const blackPattern = [1/7, 2/7, 4/7, 5/7, 6/7];
-const rInnerBlack = 3.2;
+const rInnerBlack = 0.8;
 const rOuterBlack = 1.65;
 const blackGap = 0.015;
 const allBlackAngles = [];
@@ -208,18 +213,12 @@ function showMarkerOnKey(key) {
   const angle = key.userData.angle;
   const startRadius = key.userData.radius;
 
-  const marker = new THREE.Sprite(noteMaterial.clone());
-  marker.scale.set(0.6, 0.6, 0.6);
+  const geometry = createMarkerGeometry(angle, startRadius);
 
-  marker.position.set(
-    Math.cos(angle) * startRadius,
-    0.8,
-    Math.sin(angle) * startRadius
-  );
-  console.log('Key note:', key.userData.note, 
-    '| Key angle:', key.userData.angle, 
-    '| Key radius:', key.userData.radius,
-    '| Marker position:', marker.position.x, marker.position.y, marker.position.z);
+  const marker = new THREE.Mesh(geometry, markerMaterial.clone());
+
+  marker.position.y = 0.8;
+
   scene.add(marker);
 
   activeMarkers.push({
@@ -229,6 +228,7 @@ function showMarkerOnKey(key) {
     velocityY: 0.03
   });
 }
+
 
 function playAndAnimateNote(midiNumber, duration) {
   const key = keysByMidiNumber.get(midiNumber);
@@ -313,7 +313,6 @@ window.addEventListener('click', async (event) => {
     synth.triggerAttackRelease(noteName, "8n");
   }
 });
-
 
 
 function animate() {
