@@ -23,6 +23,25 @@ function noteNameToMidiNumber(noteName) {
   return (octave + 1) * 12 + semitone;
 }
 
+function createNoteTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+
+  const ctx = canvas.getContext('2d');
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.font = '90px sans-serif';
+  ctx.fillStyle = '#00aaff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('♪', canvas.width / 2, canvas.height / 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+}
+
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
@@ -47,17 +66,16 @@ const synth = new Tone.Synth().toDestination();
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// main ambient — keeps scene readable, not too bright
+
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
 scene.add(ambientLight);
 
-// key light — main light from above/front, creates top-surface highlight on white keys
+
 const keyLight = new THREE.DirectionalLight(0xffffff, 2);
 keyLight.position.set(0, 12, 6);
 scene.add(keyLight);
 
-// rim light — positioned below and behind the ring
-// catches edges of black keys, making them glow faintly against the background
+
 const rimLight = new THREE.DirectionalLight(0x4488ff, 1.5);
 rimLight.position.set(0, -5, -8);
 scene.add(rimLight);
@@ -66,15 +84,19 @@ scene.add(piano);
 
 const keysByMidiNumber = new Map();
 
-const markerGeometry = new THREE.BoxGeometry(0.4, 0.4, 0.4);
 
-const markerMaterial = new THREE.MeshBasicMaterial({
-  color: 0x00aaff,
-  transparent: true,
-  opacity: 0.85
+
+
+const noteTexture = createNoteTexture();
+
+const noteMaterial = new THREE.SpriteMaterial({
+  map: noteTexture,
+  transparent: true
 });
 
 const activeMarkers = [];
+
+
 
 const whiteMaterial = new THREE.MeshPhysicalMaterial({
   color: WHITE_KEY_COLOR,
@@ -94,7 +116,7 @@ const blackMaterial = new THREE.MeshPhysicalMaterial({
 
 
 const totalWhiteKeys = 52;
-const rInnerWhite = 2.4;
+const rInnerWhite = 4.4;
 const rOuterWhite = 3.2;
 const whiteGap = 0.008;
 
@@ -132,7 +154,7 @@ for (let i = 0; i < totalWhiteKeys; i++) {
 
 
 const blackPattern = [1/7, 2/7, 4/7, 5/7, 6/7];
-const rInnerBlack = 0.8;
+const rInnerBlack = 3.2;
 const rOuterBlack = 1.65;
 const blackGap = 0.015;
 const allBlackAngles = [];
@@ -183,39 +205,30 @@ allBlackAngles.forEach((angleMid, index) => {
 
 function showMarkerOnKey(key) {
 
-  const marker = new THREE.Mesh(
-    markerGeometry,
-    markerMaterial.clone()
-  );
-
-  const angle = key.userData.angle-Math.PI/2;
-
+  const angle = key.userData.angle;
   const startRadius = key.userData.radius;
+
+  const marker = new THREE.Sprite(noteMaterial.clone());
+  marker.scale.set(0.6, 0.6, 0.6);
 
   marker.position.set(
     Math.cos(angle) * startRadius,
     0.8,
     Math.sin(angle) * startRadius
   );
-
+  console.log('Key note:', key.userData.note, 
+    '| Key angle:', key.userData.angle, 
+    '| Key radius:', key.userData.radius,
+    '| Marker position:', marker.position.x, marker.position.y, marker.position.z);
   scene.add(marker);
 
   activeMarkers.push({
     mesh: marker,
-    angle: angle,
-    radius: startRadius,
     age: 0,
     life: 0.4,
-    velocityY:0.03
-
-  
+    velocityY: 0.03
   });
-  console.log(
-    key.userData.note,
-    key.userData.angle
-  );
 }
-
 
 function playAndAnimateNote(midiNumber, duration) {
   const key = keysByMidiNumber.get(midiNumber);
@@ -302,6 +315,7 @@ window.addEventListener('click', async (event) => {
 });
 
 
+
 function animate() {
 
   requestAnimationFrame(animate);
@@ -309,26 +323,14 @@ function animate() {
   for (let i = activeMarkers.length - 1; i >= 0; i--) {
 
     const marker = activeMarkers[i];
-
+  
     marker.age += 0.016;
-
-    marker.radius += 0.02;
-
-    marker.mesh.position.x =
-      Math.cos(marker.angle) * marker.radius;
-
-    marker.mesh.position.z =
-      Math.sin(marker.angle) * marker.radius;
-
-    marker.mesh.material.opacity =
-      1 - marker.age / marker.life;
-
+  
+    marker.mesh.material.opacity = 1 - marker.age / marker.life;
     marker.mesh.position.y += marker.velocityY;
-
+  
     if (marker.age >= marker.life) {
-
       scene.remove(marker.mesh);
-
       activeMarkers.splice(i, 1);
     }
   }
