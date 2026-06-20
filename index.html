@@ -6,11 +6,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>Circular Piano</title>
-    <script type="module" crossorigin src="/assets/index-C3o6tUcx.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-jnFsd9iC.css">
+    <script type="module" crossorigin src="/CanonD/assets/index-CVN-51zL.js"></script>
+    <link rel="stylesheet" crossorigin href="/CanonD/assets/index-C2XxojTX.css">
   </head>
   <body>
     <div id="app"></div>
     <input type="file" id="midi-upload" accept=".mid,.midi" />
+  <button id="toggleSidebar" style="z-index: 20;">☰Settings</button>
+    <div id="sidebar" class="sidebar collapsed">
+      <button id="toggleSidebar1" style="z-index: 20;">☰</button>
+
+  <div class="panel">
+    <h3>Colors</h3>
+
+    <label>White Keys</label>
+    <input type="color" id="whiteColor" value="#c41e3a" />
+
+    <label>Black Keys</label>
+    <input type="color" id="blackColor" value="#ff6b00" />
+
+    <label>Markers</label>
+    <input type="color" id="markerColor" value="#aaff00" />
+  </div>
+</div>
   </body>
 </html>
